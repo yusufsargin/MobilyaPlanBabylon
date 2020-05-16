@@ -1,0 +1,79 @@
+.header {
+  padding-left: 16px;
+  padding: 5px;
+  text-align: left;
+  font-weight: 500;
+}
+
+.hovercontrol {
+  display: none;
+}
+
+.hovercontrol:hover {
+  display: block;
+}
+
+#invisible {
+  display: none;
+}
+
+.container.leftSideMenu {
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  width: 20%;
+  background-color: white;
+  padding: 16px;
+  border-radius: 5px;
+}
+
+.trasnparent {
+  width: 25%;
+  opacity: 0.7;
+  background-color: white;
+  padding: 16px;
+}
+.containerScroll {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  max-height: 50vh;
+  justify-content: center;
+}
+.center-col {
+  flex: 1;
+  overflow-y: scroll;
+}
+.title {
+  color: black;
+  text-align: left;
+}
+.itemscontainer {
+  padding: 16px;
+  height: 50%;
+}
+
+.containerScroll .hasBorder {
+  margin: 8px;
+  padding: 8px;
+  border-width: thin;
+  border-style: solid;
+  border-radius: 10px;
+  border-color: black;
+}
+
+.itemrow {
+  padding: 16px;
+}
+
+.tableContainerTexture {
+  margin-left: 20px;
+}
+
+.textMiddle {
+  text-align: center;
+}
+
+.boldText {
+  font-weight: 500;
+}

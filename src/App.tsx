@@ -6,6 +6,7 @@ import CreateCubeObject from "./Components/CreateCubeObject";
 import DataParser from "./SarginDrawApi/DataParser";
 import TESTDATA from "./testJsonData/test.json";
 import SarginDrawEngine, { ICizimChild } from "./SarginDrawApi/SarginDrawEngine";
+import LeftSideMenu from "./UI/LeftSideMenu/LeftSideMenu";
 
 interface IMousePosition {
   x: number;
@@ -194,93 +195,6 @@ function App() {
     return minPoints;
   }
 
-  function findMinPoint(mesh: Array<Babylon.Mesh>, yon: number = 0) {
-    let minX: number = 0;
-    let maxX: number = 0;
-    let minY: number = 0;
-    let maxY: number = 0;
-    let minZ: number = 0;
-    let maxZ: number = 0;
-    //Min Positions
-    mesh.map((item: Babylon.Mesh) => {
-      const minXPosition = item.getBoundingInfo().boundingBox.minimum.x;
-      const minYPosition = item.getBoundingInfo().boundingBox.minimum.y;
-      const minZPosition = item.getBoundingInfo().boundingBox.minimum.z;
-
-      if (minXPosition < minX) {
-        minX = minXPosition;
-      } else {
-        maxX = minXPosition;
-      }
-      if (minYPosition < minY) {
-        minY = minYPosition;
-      } else {
-        maxY = minYPosition;
-      }
-      if (minYPosition > minZ && yon === 0) {
-        minZ = minZPosition;
-      } else if (yon === 1 && minZPosition < minZ) {
-        minZ = minZPosition;
-      } else {
-        maxZ = minZPosition;
-      }
-    });
-
-    return {
-      minX: minX,
-      minY: minY,
-      minZ: minZ,
-      width: maxZ - minZ,
-      height: maxX - minX,
-      depth: maxY - minY,
-      maxX: maxX,
-      maxY: maxY,
-      maxZ: maxZ,
-    };
-  }
-
-  function transformMinPoint(
-    wallItems: Array<Babylon.TransformNode> | any,
-    yon: number = 0,
-    transform: boolean = false,
-    offset: number = 0
-  ) {
-    let wallValues: any = wallItems;
-    let lastZPosition: number = 0;
-    let lastXPosition: number = 0;
-    let lastYPosition: number = 0;
-
-    wallValues?.map((item: IWallObject) => {
-      const transformNode = Object.values(item)[0];
-      const childrenMeshs = transformNode.getChildren() || [];
-      const { minZ, width, minY, minX, height, depth } = findMinPoint(childrenMeshs, yon);
-      if (minZ > lastZPosition && yon === 0) {
-        lastZPosition = minZ - width;
-      } else if (yon === 1 && minZ < lastZPosition) {
-        lastZPosition = minZ - width;
-      }
-      if (minX < lastXPosition) {
-        lastXPosition = minX + depth;
-      }
-      if (minY < lastYPosition) {
-        lastYPosition = minY + height;
-      }
-    });
-
-    if (transform) {
-      wallItems?.map((item: any) => {
-        const transformNode: any = Object.values(item)[0];
-        transformNode.position.z = -lastZPosition + offset;
-      });
-    }
-
-    return {
-      lastX: lastXPosition,
-      lastY: lastYPosition,
-      lastZ: lastZPosition,
-    };
-  }
-
   function moveTransformNodes() {}
 
   function createFloor() {
@@ -380,7 +294,10 @@ function App() {
   }
   return (
     <div className='App'>
-      <canvas width={canvasSizes.width / 1.2} height={canvasSizes.height / 1.2} ref={canvasElement}></canvas>
+      <div>
+        <canvas width={canvasSizes.width} height={canvasSizes.height} ref={canvasElement}></canvas>
+        <LeftSideMenu></LeftSideMenu>
+      </div>
       {scene && (
         <HemisphericLight intensity={10} lightName='FirstLight' position={{ x: 10, y: 10, z: 2 }} scene={scene} />
       )}
