@@ -28,16 +28,14 @@ export default function TextureTable(props: TextureTable) {
         <Table.Body>
           {tableItems?.map((item: ITableItem, index) => {
             return (
-              <>
-                <Table.Row>
-                  <Table.Cell>
-                    <Label ribbon>{item.textureName}</Label>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <img width={imageSize} src={item.textureSrc} alt={item.textureName} />
-                  </Table.Cell>
-                </Table.Row>
-              </>
+              <Table.Row key={index}>
+                <Table.Cell>
+                  <Label ribbon>{item.textureName}</Label>
+                </Table.Cell>
+                <Table.Cell>
+                  <img width={imageSize} src={item.textureSrc} alt={item.textureName} />
+                </Table.Cell>
+              </Table.Row>
             );
           })}
         </Table.Body>

@@ -2,9 +2,33 @@ import React, { useState } from "react";
 import "./LeftSideMenu.css";
 import TextureTable, { ITableItem } from "./TextureTable";
 import { Button, Divider } from "semantic-ui-react";
-import SettingsCard from "./SettingsCard";
+import SettingsCard, { ISelectedProduct } from "./SettingsCard";
 
-export default function LeftSideMenu() {
+interface ISelectedItemProp {
+  name: string;
+  genislik: number;
+  boy: number;
+  derinlik: number;
+  duzenleVisible?: boolean;
+}
+
+export default function LeftSideMenu(props: any) {
+  const [selectedItemProp, setSelectedItemProp] = useState<ISelectedProduct>(props.selectedItem);
+
+  function setSelectedItemHandle(value: ISelectedItemProp) {
+    setSelectedItemProp((state) => {
+      let prev = state;
+
+      prev = value;
+
+      if (prev.boy > 0 && prev.genislik > 0 && prev.derinlik > 0) {
+        prev.duzenleVisible = true;
+      }
+
+      return prev;
+    });
+  }
+
   const testTableItems: Array<ITableItem> = [
     {
       textureName: "Wood",
@@ -29,7 +53,11 @@ export default function LeftSideMenu() {
         <div className='hasBorder'>
           <Divider horizontal>Seçilen Ürün Özellikleri</Divider>
           <div className='selectedItems'>
-            <SettingsCard />
+            <SettingsCard
+              productAttribute={selectedItemProp}
+              duzenleVisible={true}
+              setSelectedItemHandle={setSelectedItemHandle}
+            />
           </div>
         </div>
       </div>
