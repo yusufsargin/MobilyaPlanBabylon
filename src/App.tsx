@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, lazy } from "react";
+import React, { useState, useRef, useEffect, lazy, useCallback } from "react";
 import * as Babylon from "@babylonjs/core";
 import "./App.css";
 import HemisphericLight from "./Components/HemisphericLight";
@@ -8,6 +8,7 @@ import TESTDATA from "./testJsonData/test.json";
 import SarginDrawEngine, { ICizimChild } from "./SarginDrawApi/SarginDrawEngine";
 import LeftSideMenu from "./UI/LeftSideMenu/LeftSideMenu";
 import { Button } from "semantic-ui-react";
+import MainScene from "./Scene/MainScene";
 
 interface IMousePosition {
   x: number;
@@ -29,54 +30,19 @@ interface ISelectedItem {
 }
 
 function App() {
-  const [selectedItem, setSelectedItem] = useState<ISelectedItem>();
-  const [canvasSizes, setCanvasSizes] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const [scene, setScene] = useState<Babylon.Scene>();
+  const [cizim, setCizim] = useState<any>();
+  const [selectedItem, setSelectedItem] = useState<any>();
   const [AllElementsTrasnformNodesFirstWall, setAllElementsTrasnformNodesFirstWall] = useState<
     Array<ITransformNodes>
   >();
   const [AllElementsTrasnformNodesSecondWall, setAllElementsTrasnformNodesSecondWall] = useState<
     Array<ITransformNodes>
   >();
-
-  const [cizim, setCizim] = useState<any>();
-  const canvasElement = useRef<any>();
-  //Yeni Component içerisine gönderileceği zaman state olmalı. Şuan Var kullanmamın sebebi main içerisinden componente göndermediğim için
-  const [scene, setScene] = useState<Babylon.Scene>();
-  const [loaded, setLoaded] = useState<boolean>(false);
-
-  useEffect(() => {
-    function resizeWindow() {
-      if (scene) {
-        setCanvasSizes({ width: window.innerWidth, height: window.innerHeight });
-        scene.getEngine().resize();
-      }
-    }
-
-    window.addEventListener("resize", resizeWindow);
-    return () => {
-      window.removeEventListener("resize", resizeWindow);
-    };
-  }, [scene]);
-
-  const createCamera = (scene: Babylon.Scene, canvas: HTMLCanvasElement, paddingSensibilty?: number) => {
-    if (scene && canvas) {
-      const COT = new Babylon.TransformNode("cameraRoot");
-      const camera = new Babylon.ArcRotateCamera("Camera", 0, 0, 100, new Babylon.Vector3(0, 0, 0), scene);
-      camera.parent = COT;
-      // This targets the camera to scene origin
-      camera.setPosition(new Babylon.Vector3(50, -100, -100));
-      camera.setTarget(Babylon.Vector3.Zero());
-      camera.panningSensibility = 50;
-      camera.zoomOnFactor = 10;
-
-      // This attaches the camera to the canvas
-      camera.attachControl(canvas, true);
-      //Camera Sensibility
-    }
-  };
+  const setEvent = useCallback((evt, value) => {
+    console.log(value);
+    setSelectedItem(value);
+  }, []);
 
   function findMaxPointScene(elements: Array<ITransformNodes> | any) {
     let maxPoints = { x: 0, y: 0, z: 0 };
@@ -248,14 +214,6 @@ function App() {
   }
 
   useEffect(() => {
-    AllElementsTrasnformNodesFirstWall && nodeTrasnformStartPoint(AllElementsTrasnformNodesFirstWall);
-    AllElementsTrasnformNodesSecondWall && nodeTrasnformStartPoint(AllElementsTrasnformNodesSecondWall, 1);
-    AllElementsTrasnformNodesSecondWall && AllElementsTrasnformNodesFirstWall && setOptimumPosition();
-  }, [AllElementsTrasnformNodesFirstWall, AllElementsTrasnformNodesSecondWall]);
-
-  //---------------------------
-
-  useEffect(() => {
     if (cizim) {
       (Object.values(cizim) || []).map((item: any, index) => {
         if (item[0].duvarNo === 1) {
@@ -289,106 +247,73 @@ function App() {
     }
   }, [cizim]);
 
+  let selectedItemLocal: any = {
+    duzenleVisible: true,
+    name: "mesh.name",
+    genislik: 200,
+    boy: 15,
+    derinlik: 44,
+  };
+
   useEffect(() => {
-    if (!loaded) {
-      setLoaded(true);
-      const engine = new Babylon.Engine(canvasElement.current, true);
-      const scene = new Babylon.Scene(engine);
-      createCamera(scene, canvasElement.current);
-      setScene(scene);
+    scene && scene.render();
 
-      if (scene.isReady()) {
-        setCizim(DataParser(TESTDATA));
-      } else {
-        scene.onReadyObservable.addOnce((scene) => {
-          renderLoopElements(engine, scene);
-        });
-      }
-
-      renderLoopElements(engine, scene);
-    }
     return () => {
       scene?.dispose();
     };
-  }, [canvasElement]);
+  }, [selectedItem]);
 
-  function renderLoopElements(engineScene: Babylon.Engine, sceneElement: Babylon.Scene) {
-    if (engineScene && sceneElement) {
-      engineScene.runRenderLoop(() => {
-        sceneElement.render();
+  useEffect(() => {
+    if (scene && AllElementsTrasnformNodesFirstWall) {
+      AllElementsTrasnformNodesFirstWall.map((item: ITransformNodes) => {
+        const meshes: Array<Babylon.Mesh> | any = item.node.transformNode.getChildMeshes();
+        meshes.map((mesh: Babylon.Mesh) => {
+          mesh.isPickable = true;
+          mesh.actionManager = new Babylon.ActionManager(scene);
+          mesh.actionManager.registerAction(
+            new Babylon.ExecuteCodeAction(
+              {
+                trigger: Babylon.ActionManager.OnPickTrigger,
+              },
+              function (evt) {
+                const data = {
+                  duzenleVisible: true,
+                  name: "mesh.name",
+                  genislik: 200,
+                  boy: 15,
+                  derinlik: 44,
+                };
+
+                setEvent(evt, data);
+              }
+            )
+          );
+        });
       });
     }
-  }
 
-  const [testDATA, setTestDATA] = useState({
-    name: "TEST",
-    genislik: 10,
-    boy: 0,
-    derinlik: 0,
-    duzenleVisible: false,
-  });
+    AllElementsTrasnformNodesFirstWall && nodeTrasnformStartPoint(AllElementsTrasnformNodesFirstWall);
+    AllElementsTrasnformNodesSecondWall && nodeTrasnformStartPoint(AllElementsTrasnformNodesSecondWall, 1);
+    AllElementsTrasnformNodesSecondWall && AllElementsTrasnformNodesFirstWall && setOptimumPosition();
+  }, [AllElementsTrasnformNodesFirstWall, AllElementsTrasnformNodesSecondWall]);
 
-  useEffect(() => {
-    if (scene && scene.meshes.length > 0) {
-      const sceneCopy = scene;
-      const mesh = scene.meshes[0];
-      mesh.isPickable = true;
-      mesh.actionManager = new Babylon.ActionManager(scene);
-      console.log(mesh);
-      mesh.actionManager.registerAction(
-        new Babylon.ExecuteCodeAction(Babylon.ActionManager.OnPickTrigger, function (e) {
-          debugger;
-          const { x, y, z } = mesh.getAbsolutePosition();
-          let dataDDD = {
-            duzenleVisible: true,
-            name: mesh.name,
-            genislik: x,
-            boy: y,
-            derinlik: z,
-          };
-          console.log(dataDDD);
-          debugger;
-          setTestDATA(dataDDD);
-        })
-      );
-    }
-  }, [scene, AllElementsTrasnformNodesFirstWall]);
+  const onSceneReady = (scene: Babylon.Scene) => {
+    scene && setScene(scene);
+    console.log(scene);
 
-  useEffect(() => {
-    // if (scene && AllElementsTrasnformNodesFirstWall && canvasElement.current) {
-    //   AllElementsTrasnformNodesFirstWall.map((item: ITransformNodes) => {
-    //     const meshes: Array<Babylon.Mesh> | any = item.node.transformNode.getChildMeshes();
-    //     meshes.map((mesh: Babylon.Mesh) => {
-    //       scene.onAfterRenderObservable.add(() => {
-    //         mesh.isPickable = true;
-    //         mesh.actionManager = new Babylon.ActionManager(scene);
-    //         mesh.actionManager.registerAction(
-    //           new Babylon.ExecuteCodeAction(Babylon.ActionManager.OnPickTrigger, function (e) {
-    //             const { x, y, z } = mesh.getAbsolutePosition();
-    //             let dataDDD = {
-    //               duzenleVisible: true,
-    //               name: mesh.name,
-    //               genislik: x,
-    //               boy: y,
-    //               derinlik: z,
-    //             };
-    //             console.log(dataDDD);
-    //             debugger;
-    //             setTestDATA(dataDDD);
-    //           })
-    //         );
-    //       });
-    //     });
-    //   });
-    // }
-  }, [AllElementsTrasnformNodesFirstWall]);
+    setCizim(DataParser(TESTDATA));
+  };
+
+  /**
+   * Will run on every frame render.  We are spinning the box on y-axis.
+   */
+  const onRender = (scene: Babylon.Scene) => {
+    scene.render();
+  };
 
   return (
     <div className='App'>
-      <div>
-        <canvas width={canvasSizes.width} height={canvasSizes.height} ref={canvasElement}></canvas>
-      </div>
-      {scene && <LeftSideMenu selectedItem={testDATA}></LeftSideMenu>}
+      {<MainScene onSceneReady={onSceneReady} onRender={onRender} selectedItem={selectedItem} />}
       {scene && (
         <HemisphericLight intensity={10} lightName='FirstLight' position={{ x: 10, y: 10, z: 2 }} scene={scene} />
       )}
@@ -436,6 +361,7 @@ function App() {
             );
           }
         })}
+      {<LeftSideMenu selectedItem={selectedItemLocal}></LeftSideMenu>}
     </div>
   );
 }
